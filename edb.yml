@@ -1,0 +1,34 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  vars:
+    hostname: "{{ ansible_facts['hostname'] }}"
+    address: "{{ ansible_mgm.ipv4.address }}"
+    os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+  tasks:
+
+  - name: EDB
+    shell: /usr/edb/as14/bin/psql -V|awk '{print $3}'
+    register: edb
+    ignore_errors: yes
+    tags: edb
+
+  - set_fact:
+      edb_out: "{% if (edb.stdout == '') %}{%else%}EDB: {{ edb.stdout }}{% endif %}"
+
+  - name: stworzenie pliku
+    copy:
+      dest: /home/itsadm1/ansible/insight/results/PRD_edb_ansible.csv
+      content: "hostname;ip_mgm;os;version"
+    delegate_to: localhost
+
+  - name: zrzut do pliku
+    lineinfile:
+      dest: /home/itsadm1/ansible/insight/results/PRD_edb_ansible.csv
+      line: "{{ hostname }};{{ address }};{{ os }};{{ edb_out }}"
+      create: yes
+      owner: itsadm1
+      group: itsadm1
+      insertafter: EOF
+    delegate_to: localhost

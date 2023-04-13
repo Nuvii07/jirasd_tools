@@ -1,0 +1,54 @@
+---
+- name: Trendmicro
+    import_playbook: drupal.yml
+
+- name: Docker
+    import_playbook: docker.yml
+
+- name: Mysql
+    import_playbook: mysql.yml
+
+- name: Mongo
+    import_playbook: mongo.yml
+
+- name: Elastic
+    import_playbook: elastic.yml
+
+- name: Kibana
+    import_playbook: kibana.yml
+
+- name: LDAP
+    import_playbook: ldap.yml
+
+- name: Gluster
+    import_playbook: gluster.yml
+
+- name: Garb
+    import_playbook: garb.yml
+
+- name: Zabbix
+    import_playbook: zabbix.yml
+
+- name: Git
+    import_playbook: git.yml
+
+- name: PSQL
+    import_playbook: psql.yml
+
+- name: Filebeat
+    import_playbook: filebeat.yml
+
+- name: Wildfly
+    import_playbook: wildfly.yml
+
+- name: Ejbca
+    import_playbook: ejbca.yml
+
+- name: Apache
+    import_playbook: apache.yml
+
+- name: EDB
+    import_playbook: edb.yml
+
+- name: Drupal
+    import_playbook: drupal.yml

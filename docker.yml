@@ -1,0 +1,34 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  vars:
+    hostname: "{{ ansible_facts['hostname'] }}"
+    address: "{{ ansible_mgm.ipv4.address }}"
+    os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+  tasks:
+
+  - name: Docker
+    shell: docker --version|cut -d',' -f1|awk '{print $3}'
+    register: docker
+    ignore_errors: yes
+    tags: docker
+
+  - set_fact:
+      docker_out: "{% if (docker.stdout == '') %}{%else%}Docker: {{ docker.stdout }}{% endif %}"
+      
+  - name: stworzenie pliku
+    copy:
+      dest: /home/itsadm1/ansible/insight/tools/docker_ansible.csv
+      content: "hostname,ip_mgm,os,version"
+    delegate_to: localhost
+
+  - name: zrzut do pliku
+    lineinfile:
+      dest: /home/itsadm1/ansible/insight/tools/docker_ansible.csv
+      line: "{{ hostname }},{{ address }},{{ os }},{{ docker_out }}"
+      create: yes
+      owner: itsadm1
+      group: itsadm1
+      insertafter: EOF
+    delegate_to: localhost

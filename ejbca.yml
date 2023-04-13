@@ -1,0 +1,38 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  vars:
+    hostname: "{{ ansible_facts['hostname'] }}"
+    address: "{{ ansible_mgm.ipv4.address }}"
+    os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+  tasks:
+  
+  - name: ejbca
+    shell: readlink -f /opt/ejbca|cut -f 3,4,5,6 -d '_' --output-delimiter='.'
+    register: ejbca
+    ignore_errors: yes
+
+  - name: ejbca check
+    shell: "{% if (ejbca.stdout == '/opt/ejbca') %} ls /opt |grep ejbca_ce_7|cut -f 3,4,5,6 -d'_' --output-delimiter='.'|head -1 {% else %} readlink /opt/ejbca|cut -f 3,4,5,6 -d '_' --output-delimiter='.' {% endif %}"
+    register: ejbca
+    ignore_errors: yes
+
+  - set_fact:
+      ejbca_out: "{% if (ejbca.stdout == '') %}{%else%}EJBCA: {{ ejbca.stdout }}{% endif %}"
+
+  - name: stworzenie pliku
+    copy:
+      dest: /home/itsadm1/ansible/insight/results/ejbca_ansible.csv
+      content: "hostname;ip_mgm;os;version"
+    delegate_to: localhost
+
+  - name: zrzut do pliku
+    lineinfile:
+      dest: /home/itsadm1/ansible/insight/results/ejbca_ansible.csv
+      line: "{{ hostname }};{{ address }};{{ os }};{{ ejbca_out }}"
+      create: yes
+      owner: itsadm1
+      group: itsadm1
+      insertafter: EOF
+    delegate_to: localhost

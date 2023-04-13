@@ -1,0 +1,34 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  vars:
+    hostname: "{{ ansible_facts['hostname'] }}"
+    address: "{{ ansible_mgm.ipv4.address }}"
+    os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+  tasks:
+
+  - name: LDAP
+    shell: yum info installed openldap|grep "Version"|awk '{print $3}'
+    register: ldap
+    ignore_errors: yes
+    tags: ldap
+
+  - set_fact:
+      ldap_out: "{% if (ldap.stdout == '') %}{%else%}OpenLDAP: {{ ldap.stdout }}{% endif %}"
+
+  - name: stworzenie pliku
+    copy:
+      dest: /home/itsadm1/ansible/insight/tools/ldap_ansible.csv
+      content: "hostname,ip_mgm,os,version"
+    delegate_to: localhost
+
+  - name: zrzut do pliku
+    lineinfile:
+      dest: /home/itsadm1/ansible/insight/tools/ldap_ansible.csv
+      line: "{{ hostname }},{{ address }},{{ os }},{{ ldap_out }}"
+      create: yes
+      owner: itsadm1
+      group: itsadm1
+      insertafter: EOF
+    delegate_to: localhost

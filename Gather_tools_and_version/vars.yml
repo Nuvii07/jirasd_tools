@@ -1,0 +1,2 @@
+script_file_path: "/home/itsadm1/ansible/insight/tools/gather_tools/shell_gather_tools.sh"
+file_destination: "/home/itsadm1/ansible/insight/results_files/"

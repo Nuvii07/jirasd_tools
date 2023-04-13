@@ -1,0 +1,38 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  vars:
+    hostname: "{{ ansible_facts['hostname'] }}"
+    address: "{{ ansible_mgm.ipv4.address }}"
+    os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+  tasks:
+
+  - name: Percona Arbiter
+    shell: rpm -qa | grep -i garbd|cut -d '-' -f6
+    register: garb
+    ignore_errors: yes
+    
+  - name: Percona check
+    shell: "{% if (garb.stdout == '18.1.el7.x86_64') %} rpm -qa | grep -i garbd|cut -d '-' -f5 {% else %} rpm -qa | grep -i garbd|cut -d '-' -f6 {% endif %}"
+    register: garb
+    ignore_errors: yes
+
+  - set_fact:
+      garb_out: "{% if (garb.stdout == '') %}{%else%}Garb: {{ garb.stdout }}{% endif %}"
+
+  - name: stworzenie pliku
+    copy:
+      dest: /home/itsadm1/ansible/insight/tools/garb_ansible.csv
+      content: "hostname,ip_mgm,os,version"
+    delegate_to: localhost
+
+  - name: zrzut do pliku
+    lineinfile:
+      dest: /home/itsadm1/ansible/insight/tools/garb_ansible.csv
+      line: "{{ hostname }},{{ address }},{{ os }},{{ garb_out }}"
+      create: yes
+      owner: itsadm1
+      group: itsadm1
+      insertafter: EOF
+    delegate_to: localhost

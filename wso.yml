@@ -1,0 +1,33 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  vars:
+    hostname: "{{ ansible_facts['hostname'] }}"
+    address: "{{ ansible_mgm.ipv4.address }}"
+    os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+  tasks:
+
+  - name: WSO2 ESB
+    shell: docker exec -ti docker_sus_1 /opt/wso2ei-6.5.0/bin/integrator.sh --version|head -1|cut -d'v' -f2
+    register: wso2
+    ignore_errors: yes
+
+  - set_fact:
+      wso2_out: "{% if (wso2.stdout == '') %}{%else%}WSO2 ESB: {{ wso2.stdout }}{% endif %}"
+
+  - name: stworzenie pliku
+    copy:
+      dest: /home/itsadm1/ansible/insight/results/ACC_edb_ansible.csv
+      content: "hostname;ip_mgm;os;version"
+    delegate_to: localhost
+
+  - name: zrzut do pliku
+    lineinfile:
+      dest: /home/itsadm1/ansible/insight/results/ACC_edb_ansible.csv
+      line: "{{ hostname }};{{ address }};{{ os }};{{ edb_out }}"
+      create: yes
+      owner: itsadm1
+      group: itsadm1
+      insertafter: EOF
+    delegate_to: localhost

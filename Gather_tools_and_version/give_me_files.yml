@@ -1,0 +1,25 @@
+---
+- name: Gather tools and version
+  become: true
+  become_user: root
+  gather_facts: no
+  hosts: all
+  vars_files:
+    - vars.yml
+
+  tasks:
+
+    - name: Run script to gather data tools and version
+      script: "{{ script_file_path }}"
+
+    - name: Find and get file name to copy
+      command: "find /opt/TOOLS/ -type f"
+      register: file_to_copy
+
+    - name: Copy file to the destination path
+      fetch:
+        src: "{{ item }}"
+        dest: "{{ file_destination }}"
+        flat: yes
+      loop:
+       - "{{ file_to_copy.stdout_lines }}"

@@ -1,0 +1,36 @@
+---
+- name: all_tools
+  hosts: all
+  become: true
+  become_method: sudo
+  become_user: root
+  force_handlers: true
+  ignore_errors: true
+  ignore_unreachable: true
+  vars:
+    ansible_remote_tmp: /tmp
+    hostname: "{{ ansible_facts['hostname'] }}"
+    address: "{{ ansible_mgm.ipv4.address }}"
+    os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+  tasks:
+
+  - name: TrendMicro
+    shell: rpm -qa | grep -i ds_agent|cut -d '-' -f2
+
+  - name: Kibana
+    shell: rpm -qa | grep -i kibana|cut -d '-' -f2
+
+  - name: LDAP
+    shell: rpm -qa | grep -i openldap|cut -d '-' -f2 | head -1
+
+  - name: Percona Arbiter
+    shell: rpm -qa | grep -i garbd|cut -d '-' -f6
+
+  - name: Zabbix
+    shell: rpm -qa | grep -i zabbix-agent|cut -d '-' -f3
+
+  - name: Elasticsearch
+    shell: rpm -qa | grep -i elasticsearch|cut -d '-' -f2
+
+rpm -qa|grep -i "filebeat\|zabbix-agent\|ds_agent\|kibana\|openldap\|garbd\|elasticsearch"| sort > /tmp/tools
+cat /tmp/tools | grep filebeat|cut -d '-' -f2

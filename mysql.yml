@@ -1,0 +1,45 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  vars:
+    hostname: "{{ ansible_facts['hostname'] }}"
+    address: "{{ ansible_mgm.ipv4.address }}"
+    os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+  tasks:
+
+  - name: Mysql 5.7
+    shell: mysql -V|cut -d',' -f1|awk '{print $5}'
+    register: mysql
+    ignore_errors: yes
+
+  - name: Mysql 8.0 check
+    shell: "{% if (mysql.stdout == 'Linux') %} mysql -V|awk '{print $3}' {% else %} mysql -V|cut -d',' -f1|awk '{print $5}' {% endif %}"
+    register: mysql
+    ignore_errors: yes
+
+  - name: MySQL full
+    shell: mysqld -V
+    register: mysql_full
+    ignore_errors: yes
+
+  - set_fact:
+      mysql_out: "{% if (mysql.stdout == '') %}{%else%}MySQL: {{ mysql.stdout }}{% endif %}"
+      mysql_full_out: "{{ mysql_full.stdout }}"
+
+  - name: stworzenie pliku
+    copy:
+      force: no
+      dest: /home/itsadm1/ansible/insight/results/mysql_ansible.csv
+      content: "hostname,ip_mgm,os,version,ver_full_name"
+    delegate_to: localhost
+
+  - name: zrzut do pliku
+    lineinfile:
+      dest: /home/itsadm1/ansible/insight/results/mysql_ansible.csv
+      line: "{{ hostname }};{{ address }};{{ os }};{{ mysql_out }};{{ mysql_full_out }}"
+      create: yes
+      owner: itsadm1
+      group: itsadm1
+      insertafter: EOF
+    delegate_to: localhost

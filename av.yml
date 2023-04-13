@@ -1,0 +1,33 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  vars:
+    hostname: "{{ ansible_facts['hostname'] }}"
+    address: "{{ ansible_mgm.ipv4.address }}"
+    os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+  tasks:
+
+  - name: TrendMicro
+    shell: yum info ds_agent|grep "Version"|awk '{print $3}'
+    register: av
+    ignore_errors: yes
+
+  - set_fact:
+      av_out: "{% if (av.stdout == '') %}{%else%}TrendMicro: {{ av.stdout }}{% endif %}"
+
+  - name: stworzenie pliku
+    copy:
+      dest: /home/itsadm1/ansible/insight/tools/trendmicro_ansible.csv
+      content: "hostname,ip_mgm,os,version"
+    delegate_to: localhost
+
+  - name: zrzut do pliku
+    lineinfile:
+      dest: /home/itsadm1/ansible/insight/tools/trendmicro_ansible.csv
+      line: "{{ hostname }},{{ address }},{{ os }},{{ av_out }}"
+      create: yes
+      owner: itsadm1
+      group: itsadm1
+      insertafter: EOF
+    delegate_to: localhost

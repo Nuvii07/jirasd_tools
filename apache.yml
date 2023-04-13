@@ -1,0 +1,33 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  vars:
+    hostname: "{{ ansible_facts['hostname'] }}"
+    address: "{{ ansible_mgm.ipv4.address }}"
+    os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+  tasks:
+
+  - name: apache
+    shell: apachectl -v|cut -d'/' -f2|awk '{print $1}'|head -1
+    register: apache
+    ignore_errors: yes
+
+  - set_fact:
+      apache_out: "{% if (apache.stdout == '') %}{%else%}Apache HTTP Server: {{ apache.stdout }}{% endif %}"
+
+  - name: stworzenie pliku
+    copy:
+      dest: /home/itsadm1/ansible/insight/results/apache_ansible.csv
+      content: "hostname;ip_mgm;os;version"
+    delegate_to: localhost
+
+  - name: zrzut do pliku
+    lineinfile:
+      dest: /home/itsadm1/ansible/insight/results/apache_ansible.csv
+      line: "{{ hostname }};{{ address }};{{ os }};{{ apache_out }}"
+      create: yes
+      owner: itsadm1
+      group: itsadm1
+      insertafter: EOF
+    delegate_to: localhost
